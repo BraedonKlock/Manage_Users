@@ -1,0 +1,139 @@
+#!/bin/sh -u
+PATH=/bin:/usr/bin ; export PATH
+umask 022
+
+# Braedon Klock
+# 040 796 383
+# Course & Lab Section: CST8102 321
+# Assignment #: Assignment 2
+# Script file name:  manage_users
+# Submitted: March 31, 2025
+#
+# This script allows a user to manage user accounts
+# through a interface. Options include adding
+# users, modifying groups and shells, setting expiry dates,
+# and deleting accounts.
+
+
+SCRIPT_NAME="$(basename "$0")"
+
+error() {
+    echo "$SCRIPT_NAME: Error - $1" >&2
+}
+
+SHOW_MENU() {
+    clear
+    echo "|====================|"
+    echo "|------- Menu -------|"
+    echo "|====================|"
+    echo "a. Add a user account"
+    echo "i. Change user's primary group"
+    echo "s. Change user's supplementary group"
+    echo "l. Change user's login shell"
+    echo "e. Set user account expiration date"
+    echo "d. Delete a user account"
+    echo "q. Quit"
+    echo "=================================="
+    echo -n "Choose an option: "
+}
+
+ADD_USER() {
+    echo -n "Enter username: "
+    read username
+    echo -n "Enter home directory (absolute path): "
+    read home_dir
+    echo -n "Enter login shell (absolute path): "
+    read shell
+
+    sudo useradd -m -d "$home_dir" -s "$shell" "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to add user."
+    else
+        echo "User $username added successfully."
+    fi
+}
+
+CHANGE_PRIMARY_GROUP() {
+    echo -n "Enter username: "
+    read username
+    echo -n "Enter new initial group: "
+    read group
+
+    sudo usermod -g "$group" "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to change initial group."
+    else
+        echo "Initial group changed successfully."
+    fi
+}
+
+CHANGE_SUPP_GROUP() {
+    echo -n "Enter username: "
+    read username
+    echo -n "Enter supplementary group to add: "
+    read group
+
+    sudo usermod -aG "$group" "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to change supplementary group."
+    else
+        echo "Supplementary group changed successfully."
+    fi
+}
+
+CHANGE_SHELL() {
+    echo -n "Enter username: "
+    read username
+    echo -n "Enter new login shell (absolute path): "
+    read shell
+
+    sudo usermod -s "$shell" "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to change login shell."
+    else
+        echo "Login shell updated successfully."
+    fi
+}
+
+SET_EXPIRATION() {
+    echo -n "Enter username: "
+    read username
+    echo -n "Enter expiration date (YYYY-MM-DD): "
+    read date
+
+    sudo chage -E "$date" "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to set expiration date."
+    else
+        echo "Expiration date set successfully."
+    fi
+}
+
+DELETE_USER() {
+    echo -n "Enter username to delete: "
+    read username
+
+    sudo userdel -r "$username" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to delete user."
+    else
+        echo "User $username deleted successfully."
+    fi
+}
+
+while true; do	
+    clear
+    SHOW_MENU
+    read option
+    case "$option" in
+        A|a) ADD_USER ;;
+        I|i) CHANGE_PRIMARY_GROUP ;;
+        S|s) CHANGE_SUPP_GROUP ;;
+        L|l) CHANGE_SHELL ;;
+        E|e) SET_EXPIRATION ;;
+        D|d) DELETE_USER ;;
+        Q|q) echo "Exiting!"; exit 0 ;;
+        *) error "Invalid selection." ;;
+    esac
+    sleep 3
+done
